@@ -12,10 +12,7 @@
 
 #include <Wire.h>
 #include <UC1701.h>
-//Download libary from https://github.com/Industruino/
-
-// A custom glyph (a smiley)...
-static const byte glyph[] = { B00010000, B00110100, B00110000, B00110100, B00010000 };
+#include <EEPROM.h>
 
 int minutes[9];
 int temp1[9];
@@ -29,13 +26,8 @@ bool started = false;
 
 static UC1701 lcd;
 
-char keyword[2];
-char newValChar[3];
-
-const byte numChars = 3;
-char receivedChars[numChars]; // an array to store the received data
-
-boolean newData = false;
+String thingtochange = "";
+String numtochange = "";
 
 //menu defines
 
@@ -138,8 +130,8 @@ for (int x=0; x <= 128; x++){
  Serial.begin(9600); //enables Serial port for debugging messages
 
 //Menu init  
+ ReadEEPROM();
  MenuSplash(); //load first menu
-
  previousMillis = millis();
 }
 
@@ -155,17 +147,12 @@ for (int x=0; x <= 128; x++){
 */
 
 void loop() { 
-  if (started) {  
-  Serial.print(currentMillis);  
-  Serial.print(" ");
-  Serial.println(minutes[currentStage] * 60000);
+	getInput();
+	if (started) {  
+
   currentMillis = millis();  
 
-  while (Serial.available() > 0) {
-	  while (Serial.read() != ' ') {
-
-	  }
-  }
+  
 
   if (currentMillis - previousMillis >= (minutes[currentStage] * 60000)) {
       previousMillis = currentMillis;
@@ -296,7 +283,9 @@ void CurrentState(){
   lcd.setCursor(6, 0);
   lcd.print("Time (mins)    ");
   lcd.setCursor(100, 0);
-  lcd.print((currentMillis/60000)+"/"+minutes[currentStage]);
+  lcd.print((currentMillis / 60000));
+  lcd.print("/");
+  lcd.print(minutes[currentStage]);
   lcd.setCursor(6, 1);
   lcd.print("Temp (F)    ");
   lcd.setCursor(100, 1);
@@ -317,309 +306,6 @@ void CurrentState(){
   lcd.print("/");
   lcd.print(totalStages);
 }
-
-/*void MenuParametersReset() {
-  channel = 6;
-  channelUpLimit = 5;
-  channelLowLimit = 4;
-  MenuID = 10;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("Set system");
-  lcd.setCursor(6, 1);
-  lcd.print("to default");
-  lcd.setCursor(6, 2);
-  lcd.print("settings?");
-  lcd.setCursor(6, 4);
-  lcd.print("OK?");
-  lcd.setCursor(6, 5);
-  lcd.print("Cancel");
-  
-}
-
-void CurrentState() {
-  channel = 0;
-  channelUpLimit = 1;
-  channelLowLimit = 0;
-  MenuID = 3;
-  MenuLevel = 2;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("Placeholder");
-  lcd.setCursor(6, 1);
-  lcd.print("Back");
-}
-
-
-
-
-
-void MenuDigitalOut1() {
-  SetOutput();
-  channel = 0;
-  channelUpLimit = 6;
-  channelLowLimit = 0;
-  MenuID = 1;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("D0");
-  lcd.setCursor(6, 1);
-  lcd.print("D1");
-  lcd.setCursor(6, 2);
-  lcd.print("D2");
-  lcd.setCursor(6, 3);
-  lcd.print("D3");
-  lcd.setCursor(6, 4);
-  lcd.print("D4");
-  lcd.setCursor(6, 5);
-  lcd.print("D5");
-}
-
-/*void MenuDigitalOut2() {
-  channel = 0;
-  channelUpLimit = 6;
-  channelLowLimit = -1;
-  MenuID = 2;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("D6");
-  lcd.setCursor(6, 1);
-  lcd.print("D7");
-  lcd.setCursor(6, 2);
-  lcd.print("D8");
-  lcd.setCursor(6, 3);
-  lcd.print("D9");
-  lcd.setCursor(6, 4);
-  lcd.print("D10");
-  lcd.setCursor(6, 5);
-  lcd.print("D11");
-
-}
-
-void MenuDigitalOut3() {
-  channel = 0;
-  channelUpLimit = 5;
-  channelLowLimit = -1;
-  MenuID = 3;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("D12");
-  lcd.setCursor(6, 1);
-  lcd.print("D14");
-  lcd.setCursor(6, 2);
-  lcd.print("D15");
-  lcd.setCursor(6, 3);
-  lcd.print("D16");
-  lcd.setCursor(6, 4);
-  lcd.print("D17");
-  lcd.setCursor(6, 5);
-  lcd.print("Back");
-}
-
-
-void MenuDigitalIn1() {
-  SetInput();
-  channel = 0;
-  channelUpLimit = 1;
-  channelLowLimit = 0;
-  MenuID = 4;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  MenuDigitalIn1Live();
-}
-
-void MenuDigitalIn1Live() {
-  lcd.setCursor(6, 0);
-  lcd.print("D0  ");
-  lcd.print(digitalRead(0));
-  lcd.setCursor(6, 1);
-  lcd.print("D1  ");
-  lcd.print(digitalRead(1));
-  lcd.setCursor(6, 2);
-  lcd.print("D2  ");
-  lcd.print(digitalRead(2));
-  lcd.setCursor(6, 3);
-  lcd.print("D3  ");
-  lcd.print(digitalRead(3));
-  lcd.setCursor(6, 4);
-  lcd.print("D4  ");
-  lcd.print(digitalRead(4));
-  lcd.setCursor(6, 5);
-  lcd.print("D5  ");
-  lcd.print(digitalRead(5));
-
-
-}
-
-void MenuDigitalIn2() {
-  channel = 0;
-  channelUpLimit = 1;
-  channelLowLimit = -1;
-  MenuID = 5;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  MenuDigitalIn2Live();
-}
-
-void MenuDigitalIn2Live() {
-  lcd.setCursor(6, 0);
-  lcd.print("D6  ");
-  lcd.print(digitalRead(6));
-  lcd.setCursor(6, 1);
-  lcd.print("D7  ");
-  lcd.print(digitalRead(7));
-  lcd.setCursor(6, 2);
-  lcd.print("D8  ");
-  lcd.print(digitalRead(8));
-  lcd.setCursor(6, 3);
-  lcd.print("D9  ");
-  lcd.print(digitalRead(9));
-  lcd.setCursor(6, 4);
-  lcd.print("D10 ");
-  lcd.print(digitalRead(10));
-  lcd.setCursor(6, 5);
-  lcd.print("D11 ");
-  lcd.print(digitalRead(11));
-}
-
-
-void MenuDigitalIn3() {
-  lcd.clear();
-  channel = 5;
-  channelUpLimit = 5;
-  channelLowLimit = 4;
-  MenuID = 6;
-  MenuLevel = 3;
-  enterPressed = 0;
-  ScrollCursor();
-  MenuDigitalIn2Live();
-}
-
-void MenuDigitalIn3Live() {
-  lcd.setCursor(6, 0);
-  lcd.print("D12 ");
-  lcd.print(digitalRead(12));
-  lcd.setCursor(6, 1);
-  lcd.print("D14 ");
-  lcd.print(digitalRead(14));
-  lcd.setCursor(6, 2);
-  lcd.print("D15 ");
-  lcd.print(digitalRead(15));
-  lcd.setCursor(6, 3);
-  lcd.print("D16 ");
-  lcd.print(digitalRead(16));
-  lcd.setCursor(6, 4);
-  lcd.print("D17 ");
-  lcd.print(digitalRead(17));
-  lcd.setCursor(6, 5);
-  lcd.print("Back   ");
-}
-
-
-void AnalogOut1() {
-  channel = 0;
-  channelUpLimit = 6;
-  channelLowLimit = 0;
-  MenuID = 8;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("D0");
-  lcd.setCursor(6, 1);
-  lcd.print("D1");
-  lcd.setCursor(6, 2);
-  lcd.print("D3");
-  lcd.setCursor(6, 3);
-  lcd.print("D5");
-  lcd.setCursor(6, 4);
-  lcd.print("D6");
-  lcd.setCursor(6, 5);
-  lcd.print("D7");
-}
-
-void MenuAnalogIn1() {
-  SetInput();
-  channel = 0;
-  channelUpLimit = 1;
-  channelLowLimit = 0;
-  MenuID = 7;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  MenuAnalogIn1Live();
-}
-
-void MenuAnalogIn1Live() {
-  lcd.setCursor(6, 0);
-  lcd.print("A0           ");
-  lcd.setCursor(30, 0);
-  lcd.print(analogRead(0));
-  lcd.setCursor(6, 1);
-  lcd.print("A6           ");
-  lcd.setCursor(30, 1);
-  lcd.print(analogRead(6));
-  lcd.setCursor(6, 2);
-  lcd.print("A7           ");
-  lcd.setCursor(30, 2);
-  lcd.print(analogRead(7));
-  lcd.setCursor(6, 3);
-  lcd.print("A8           ");
-  lcd.setCursor(30, 3);
-  lcd.print(analogRead(8));
-  lcd.setCursor(6, 4);
-  lcd.print("A9           ");
-  lcd.setCursor(30, 4);
-  lcd.print(analogRead(9));
-  lcd.setCursor(6, 5);
-  lcd.print("A10          ");
-  lcd.setCursor(30, 5);
-  lcd.print(analogRead(10));
-}
-
-
-void MenuAnalogIn2() {
-  SetInput();
-  channel = 1;
-  channelUpLimit = 1;
-  channelLowLimit = 0;
-  MenuID = 8;
-  MenuLevel = 3;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  MenuAnalogIn2Live();
-}
-
-void MenuAnalogIn2Live() {
-  lcd.setCursor(6, 0);
-  lcd.print("A11          ");
-  lcd.setCursor(30, 0);
-  lcd.print(analogRead(11));
-  lcd.setCursor(6, 1);
-  lcd.print("Back   ");
-}
-*/
 
 
 //---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -644,7 +330,10 @@ if (valueEditing != 1){
     
     if (channel == 0 && enterPressed == 1) MenuSetup(); //if cursor is on the first row and enter is pressed load the 'Setup' menu
     if (channel == 1 && enterPressed == 1) CurrentState(); //if cursor is on the second row and enter is pressed load the 'Demo' menu
-    if (channel == 2 && enterPressed == 1 && !started) Start(); //if cursor is on the third row and enter is pressed load the 'splash screen'
+	if (channel == 2 && enterPressed == 1 && !started) {
+		WriteEEPROM();
+		Start(); //if cursor is on the third row and enter is pressed load the 'splash screen'
+	}
     if (channel == 2 && enterPressed == 1 && started) Stop(); //if cursor is on the third row and enter is pressed load the 'splash screen'
     if (channel == 3 && enterPressed == 1) MenuSplash();
      }
@@ -672,130 +361,20 @@ if (valueEditing != 1){
         if (channel == 3 && enterPressed == 1) temp3[currentStage] = EditValue(400, 10, 200);
         if (channel == 4 && enterPressed == 1) {
           if (currentStage < totalStages) currentStage++;
+		  else currentStage = 1;
           StageSetup(currentStage);
         }
         
         if (channel == 5 && enterPressed == 1) {
           if (currentStage > 0) currentStage--;
+		  else currentStage = totalStages;
           StageSetup(currentStage);
         }
         if (channel == 6 && enterPressed == 1) MenuSetup();
       }
     }
       
-      /*if (MenuID == 0){
-        if (channel == 0 && enterPressed == 1) //using 'value editing mode' to edit a variable using the UI
-       {
-        TargetValue = backlightIntensity; //copy variable to be edited to 'Target value'
-        backlightIntensity = EditValue(); 
-        digitalWrite(backlightPin, backlightIntensity);
-        EEPROM.write(0, backlightIntensity);
-        
-       }
-        if (channel == 1 && enterPressed == 1) MenuParametersReset();
-        if (channel == 2 && enterPressed == 1) CurrentState();   
-        }  
-      if (MenuID == 3){
-        if (channel == 0 && enterPressed == 1) MenuMain(); 
-        if (channel == 1 && enterPressed == 1) MenuMain(); 
-        if (channel == 2 && enterPressed == 1) MenuAnalogIn1(); 
-        if (channel == 3 && enterPressed == 1) MenuMain(); 
-        }
-       }
-     
-    if (MenuLevel == 3){
-      if (MenuID == 1){
-        if (channel == 0 && buttonEnterState == HIGH) digitalWrite(D0, HIGH); 
-        if (channel == 0 && buttonEnterState == LOW) digitalWrite(D0, LOW); 
-        if (channel == 1 && buttonEnterState == HIGH) digitalWrite(D1, HIGH); 
-        if (channel == 1 && buttonEnterState == LOW) digitalWrite(D1, LOW); 
-        if (channel == 2 && buttonEnterState == HIGH) digitalWrite(D2, HIGH); 
-        if (channel == 2 && buttonEnterState == LOW) digitalWrite(D2, LOW); 
-        if (channel == 3 && buttonEnterState == HIGH) digitalWrite(D3, HIGH); 
-        if (channel == 3 && buttonEnterState == LOW) digitalWrite(D3, LOW); 
-        if (channel == 4 && buttonEnterState == HIGH) digitalWrite(D4, HIGH); 
-        if (channel == 4 && buttonEnterState == LOW) digitalWrite(D4, LOW);
-        if (channel == 5 && buttonEnterState == HIGH) digitalWrite(D5, HIGH); 
-        if (channel == 5 && buttonEnterState == LOW) digitalWrite(D5, LOW);
-        if (channel == 6) MenuDigitalOut2();
-        } 
-      if (MenuID == 2){
-        if (channel == 0 && buttonEnterState == HIGH) digitalWrite(D6, HIGH); 
-        if (channel == 0 && buttonEnterState == LOW) digitalWrite(D6, LOW); 
-        if (channel == 1 && buttonEnterState == HIGH) digitalWrite(D7, HIGH); 
-        if (channel == 1 && buttonEnterState == LOW) digitalWrite(D7, LOW); 
-        if (channel == 2 && buttonEnterState == HIGH) digitalWrite(D8, HIGH); 
-        if (channel == 2 && buttonEnterState == LOW) digitalWrite(D8, LOW); 
-        if (channel == 3 && buttonEnterState == HIGH) digitalWrite(D9, HIGH); 
-        if (channel == 3 && buttonEnterState == LOW) digitalWrite(D9, LOW); 
-        if (channel == 4 && buttonEnterState == HIGH) digitalWrite(D10, HIGH); 
-        if (channel == 4 && buttonEnterState == LOW) digitalWrite(D10, LOW); 
-        if (channel == 5 && buttonEnterState == HIGH) digitalWrite(D11, HIGH); 
-        if (channel == 5 && buttonEnterState == LOW) digitalWrite(D11, LOW); 
-        if (channel == 6) MenuDigitalOut3();
-        if (channel == -1) MenuDigitalOut1();
-        }
-      if (MenuID == 3){
-        if (channel == 0 && buttonEnterState == HIGH) digitalWrite(D12, HIGH); 
-        if (channel == 0 && buttonEnterState == LOW) digitalWrite(D12, LOW);
-        if (channel == 1 && buttonEnterState == HIGH) digitalWrite(D14, HIGH); 
-        if (channel == 1 && buttonEnterState == LOW) digitalWrite(D14, LOW); 
-        if (channel == 2 && buttonEnterState == HIGH) digitalWrite(D15, HIGH); 
-        if (channel == 2 && buttonEnterState == LOW) digitalWrite(D15, LOW); 
-        if (channel == 3 && buttonEnterState == HIGH) digitalWrite(D16, HIGH); 
-        if (channel == 3 && buttonEnterState == LOW) digitalWrite(D16, LOW); 
-        if (channel == 4 && buttonEnterState == HIGH) digitalWrite(D17, HIGH); 
-        if (channel == 4 && buttonEnterState == LOW) digitalWrite(D17, LOW);
-        if (channel == 5 && enterPressed == 1) CurrentState(); 
-        if (channel == -1) MenuDigitalOut2();
-        }
-      if (MenuID == 4){
-        if ((millis()-lastLCDredraw) > 300){
-        MenuDigitalIn1Live();
-        lastLCDredraw = millis();
-        }
-        if (channel == 1) MenuDigitalIn2();
-        }
-      if (MenuID == 5){
-        if ((millis()-lastLCDredraw) > 300){
-        MenuDigitalIn2Live();
-        lastLCDredraw = millis();
-        }
-        if (channel == 1) MenuDigitalIn3();
-        if (channel == -1) MenuDigitalIn1();
-        }
-      if (MenuID == 6){
-        if ((millis()-lastLCDredraw) > 300){
-        MenuDigitalIn3Live();
-        lastLCDredraw = millis();
-        }
-        if (channel == 4) MenuDigitalIn2();
-        if (channel == 5 && enterPressed == 1) CurrentState(); 
-        }    
-      if (MenuID == 7){
-        if ((millis()-lastLCDredraw) > 300){
-        MenuAnalogIn1Live();
-        lastLCDredraw = millis();
-        }
-        if (channel == 1) MenuAnalogIn2();
-        }   
-      if (MenuID == 8){
-        if ((millis()-lastLCDredraw) > 300){
-        MenuAnalogIn2Live();
-        lastLCDredraw = millis();
-        }
-        if (channel == 0) MenuAnalogIn1();
-        if (channel == 1 && enterPressed == 1) CurrentState(); 
-        }   
-        
-        
-      if (MenuID == 10){
-        if (channel == 4 && enterPressed == 1) ResetParameters();
-        if (channel == 5 && enterPressed == 1) MenuSetup(); 
-        } 
-    
-       }
-       */
+      
  //dont remove this part
  if (channel != lastChannel && valueEditing != 1 && MenuID != 0){ //updates the cursor position if button counter changed and 'value editing mode' is not running
   ScrollCursor();
@@ -989,11 +568,13 @@ double getTemp(int thermPin) {
 void Start(){
   currentStage = 1;
 started = true;
+Serial.println("Cycle started!");
 MenuMain();
 }
 
 void Stop(){
   started = false;
+  Serial.println("Cycle stopped!");
   MenuMain();
 }
 
@@ -1006,45 +587,151 @@ void help() {
 
 void SerialControl(char pin, int newVal) {
 	switch (pin) {
-	case 'T1':
+	case 'A':
 		temp1[currentStage] = newVal;
 		break;
-	case 'T2':
+	case 'B':
 		temp2[currentStage] = newVal;
 		break;
-	case 'T3':
+	case 'C':
 		temp3[currentStage] = newVal;
 		break;
-	case 'ST':
+	case 'T':
 		minutes[currentStage] = newVal;
-		break;
-	default:
-		help();
 		break;
 	}
 	
 }
 
-void recvWithEndMarker() {
-	static byte ndx = 0;
-	char endMarker = '\n';
-	char rc;
+void ReadEEPROM() {
+	for (int i = 1; i <= totalStages; i++) {
+		minutes[i] = EEPROM.read(i);
+		temp1[i] = EEPROM.read(i + 20);
+		temp2[i] = EEPROM.read(i + 40);
+		temp3[i] = EEPROM.read(i + 60);
+	}
+}
 
-	while (Serial.available() > 0 && newData == false) {
-		rc = Serial.read();
+void WriteEEPROM() {
+	for (int i = 1; i <= totalStages; i++) {
+		EEPROM.update(i, minutes[i]);
+		EEPROM.update(i + 20, temp1[i]);
+		EEPROM.update(i + 40, temp2[i]);
+		EEPROM.update(i + 60, temp3[i]);
+	}
+}
 
-		if (rc != endMarker) {
-			receivedChars[ndx] = rc;
-			ndx++;
-			if (ndx >= numChars) {
-				ndx = numChars - 1;
-			}
+void getInput() {
+	thingtochange = "";
+	numtochange = "";
+	char newchar;
+	int word = 1;
+	String stage = "";
+	while (Serial.available() > 0) {
+		newchar = Serial.read();
+		if (newchar == '?') {
+			help();
+			Serial.flush();
 		}
-		else {
-			receivedChars[ndx] = '\0'; // terminate the string
-			ndx = 0;
-			newData = true;
+		if (newchar == ' ') word++;
+		if (word == 1 && newchar != ' ' && newchar != '\n') {
+			thingtochange += newchar;
+			
+		}
+		
+		if (word == 2 && newchar != ' ' && newchar != '\n') {
+			stage += newchar;
+			
+		}
+		if (word == 3 && newchar != ' ' && newchar != '\n') {
+			numtochange += newchar;
+			
+		}
+		if (newchar == '\n') {
+			//Serial.println(thingtochange);
+			//Serial.println(stage);
+			//Serial.println(numtochange);
+			ParseInput(thingtochange, stage, numtochange);
+			break;
 		}
 	}
-		
+	
 }
+
+void ParseInput(String thing, String localstage, String localamount) {
+	int amount = localamount.toInt();
+	int stage = localstage.toInt();
+
+	if (thing == "time") {
+		minutes[stage] = amount;
+		Serial.print("Stage ");
+		Serial.print(stage);
+		Serial.print(" time changed to ");
+		Serial.print(amount); 
+		Serial.println(" minutes");
+	}
+	else if (thing == "set1") {
+		temp1[stage] = amount;
+		Serial.print("Setpoint 1 for stage ");
+		Serial.print(stage);
+		Serial.print(" changed to ");
+		Serial.print(amount);
+		Serial.println(" degrees");
+	}
+	else if (thing == "set2") {
+		temp2[stage] = amount;
+		Serial.print("Setpoint 2 for stage ");
+		Serial.print(stage);
+		Serial.print(" changed to ");
+		Serial.print(amount);
+		Serial.println(" degrees");
+	}
+	else if (thing == "set3") {
+		temp3[stage] = amount;
+		Serial.print("Setpoint 3 for stage ");
+		Serial.print(stage);
+		Serial.print(" changed to ");
+		Serial.print(amount);
+		Serial.println(" degrees");
+	}
+	else if (thing == "status") {
+		Serial.print("Stage ");
+		Serial.print(currentStage);
+		Serial.print(" of ");
+		Serial.println(totalStages);
+		Serial.print("Elapsed Stage Time: ");
+		Serial.println(previousMillis / 60000);
+		Serial.print("Total Stage Time: ");
+		Serial.println(minutes[currentStage]);
+		Serial.print("Temp 1 ");
+		Serial.print(getTemp(tempPin1));
+		Serial.print(", Setpoint ");
+		Serial.println(temp1[currentStage]);
+		Serial.print("Temp 2 ");
+		Serial.print(getTemp(tempPin2));
+		Serial.print(", Setpoint ");
+		Serial.println(temp2[currentStage]);
+		Serial.print("Temp 3 ");
+		Serial.print(getTemp(tempPin3));
+		Serial.print(", Setpoint ");
+		Serial.println(temp3[currentStage]);
+	}
+	else if (thing == "stop") Stop();
+	else if (thing == "start") Start();
+	else if (thing == "list") {
+		for (int i = 1; i <= totalStages; i++) {
+			Serial.print("Stage ");
+			Serial.print(i);
+			Serial.println(": ");
+			Serial.print("Time: ");
+			Serial.println(minutes[i]);
+			Serial.print("Setpoint 1: ");
+			Serial.println(temp1[i]);
+			Serial.print("Setpoint 2: ");
+			Serial.println(temp2[i]);
+			Serial.print("Setpoint 3: ");
+			Serial.println(temp3[i]);
+		}
+	}
+	else Serial.println("Invalid input!");
+	}
