@@ -13,6 +13,7 @@
 #include <Wire.h>
 #include <UC1701.h>
 #include <EEPROM.h>
+#include <Indio.h>
 
 int minutes[9];
 int temp1[9];
@@ -93,27 +94,39 @@ const int D14 = 14;
 const int D15 = 15;
 const int D16 = 16;
 const int D17 = 17;
-const int tempPin1 = 0;
-const int tempPin2 = 1;
-const int tempPin3 = 2;
-const int dampercontrol1 = 3;
-const int dampercontrol2 = 4;
-const int dampercontrol3 = 5;
+const int tempPin1 = 1;
+const int tempPin2 = 2;
+const int tempPin3 = 3;
+const int dampercontrol1 = 1;
+const int dampercontrol2 = 2;
+
 
 
 int ButtonsAnalogValue = 0;        // value read from mebrane panel buttons.
 int backlightIntensity = 0;        // LCD backlight intesity
 int backlightIntensityDef = 0;     // Default LCD backlight intesity
 unsigned long lastLCDredraw = 0;   // keeps track of last time the screen was redrawn
+void(* resetFunc) (void) = 0;
 
 void setup() {
   
   SetInput(); //Sets all general pins to input
+  
   backlightIntensity = 0; //loads the backlight intensity from EEPROM
-  pinMode(buttonEnterPin, INPUT);
+  pinMode(backlightPin, OUTPUT); //set backlight pin to output 
+  /*pinMode(buttonEnterPin, INPUT);
   pinMode(buttonUpPin, INPUT);
   pinMode(buttonDownPin, INPUT);
-  pinMode(backlightPin, OUTPUT); //set backlight pin to output 
+  
+  pinMode(dampercontrol1, OUTPUT);
+  pinMode(dampercontrol2, OUTPUT);*/
+  Indio.setADCResolution(16);
+  Indio.analogReadMode(tempPin1, mA_p);
+  Indio.analogReadMode(tempPin2, mA_p);
+  Indio.analogReadMode(tempPin3, mA_p);
+  Indio.analogWriteMode(dampercontrol1, mA_p);
+  Indio.analogWriteMode(dampercontrol2, mA_p);
+
   digitalWrite (backlightPin, backlightIntensity); //convert backlight intesity from a value of 0-5 to a value of 0-255 for PWM.
 
 //LCD init
@@ -162,7 +175,7 @@ void loop() {
       else Stop();
   }
   if (getTemp(tempPin1) > temp1[currentStage]) {
-    moveDamper(dampercontrol1);
+    moveDamper(dampercontrol1, 50);
   }
   
   }
@@ -194,6 +207,7 @@ void MenuSplash() { //this function draws the first menu - splash screen
 void MenuMain() { //second menu - choice of submenu's
 //menu inintialisers
   channel = 0; //starting row position of the cursor (top row) - controlled by the button panel counter
+  channelLowLimit = 0;
   channelUpLimit = 3; //upper row limit
   MenuLevel = 1; //menu tree depth -> second level
   MenuID = 1; //unique menu id -> has to be unique for each menu on the same menu level.
@@ -272,39 +286,60 @@ void StageSetup(int stage){
 }
 
 void CurrentState(){
-   channel = 0;
-  channelUpLimit = 6;
-  channelLowLimit = 6;
-  MenuID = 2;
-  MenuLevel = 2;
-  enterPressed = 0;
-  lcd.clear();
-  ScrollCursor();
-  lcd.setCursor(6, 0);
-  lcd.print("Time (mins)    ");
-  lcd.setCursor(100, 0);
-  lcd.print((currentMillis / 60000));
-  lcd.print("/");
-  lcd.print(minutes[currentStage]);
-  lcd.setCursor(6, 1);
-  lcd.print("Temp (F)    ");
-  lcd.setCursor(100, 1);
-  lcd.print(getTemp(tempPin1), 2);
-  lcd.setCursor(6, 2);
-  lcd.print("Temp (F)    ");
-  lcd.setCursor(100, 2);
-  lcd.print(getTemp(tempPin2), 2);
-  lcd.setCursor(6, 3);
-  lcd.print("Temp (F)    ");
-  lcd.setCursor(100, 3);
-  lcd.print(getTemp(tempPin3), 2);  
-  lcd.setCursor(6, 6);
-  lcd.print("Exit");
-  lcd.setCursor(6, 7);
-  lcd.print("Stage ");
-  lcd.print(currentStage);
-  lcd.print("/");
-  lcd.print(totalStages);
+	
+		channel = 0;
+		channelUpLimit = 6;
+		channelLowLimit = 6;
+		MenuID = 2;
+		MenuLevel = 2;
+		enterPressed = 0;
+		lcd.clear();
+		ScrollCursor();
+		lcd.setCursor(6, 0);
+		lcd.print("Time (mins)    ");
+		lcd.setCursor(80, 0);
+		lcd.print(((currentMillis - previousMillis) / 60000));
+		lcd.print("/");
+		lcd.print(minutes[currentStage]);
+		lcd.setCursor(6, 1);
+		lcd.print("Temp (F)    ");
+		lcd.setCursor(80, 1);
+		lcd.print(getTemp(tempPin1), 2);
+		lcd.setCursor(6, 2);
+		lcd.print("Temp (F)    ");
+		lcd.setCursor(80, 2);
+		lcd.print(getTemp(tempPin2), 2);
+		lcd.setCursor(6, 3);
+		lcd.print("Temp (F)    ");
+		lcd.setCursor(80, 3);
+		lcd.print(getTemp(tempPin3), 2);
+		lcd.setCursor(6, 6);
+		lcd.print("Exit");
+		lcd.setCursor(6, 7);
+		lcd.print("Stage ");
+		lcd.print(currentStage);
+		lcd.print("/");
+		lcd.print(totalStages);
+	
+		while (!enterPressed) {
+			lcd.setCursor(80, 0);
+			lcd.print(((currentMillis - previousMillis) / 60000));
+			lcd.print("/");
+			lcd.print(minutes[currentStage]);
+			lcd.setCursor(80, 1);
+			lcd.print(getTemp(tempPin1), 2);
+			lcd.setCursor(80, 2);
+			lcd.print(getTemp(tempPin2), 2);
+			lcd.setCursor(80, 3);
+			lcd.print(getTemp(tempPin3), 2);
+			lcd.setCursor(6, 7);
+			lcd.print("Stage ");
+			lcd.print(currentStage);
+			lcd.print("/");
+			lcd.print(totalStages);
+			ReadButtons();
+	}
+
 }
 
 
@@ -555,12 +590,13 @@ void ScrollCursor() //makes the cursor move
 // Malter Functions
 //---------------------------------------------------------------------------------------------------------------------------------------------   
 
-void moveDamper(int damper) {
-  
+void moveDamper(int damper, int percentage) {
+	Indio.analogWrite(damper, percentage, false);
+	Serial.println("Damper moved!");
 }
 
 double getTemp(int thermPin) {
-  double mAVal = analogRead(thermPin);
+  double mAVal = Indio.analogRead(thermPin);
   double temp = mAVal * 2;
   return temp;
 }
@@ -569,6 +605,7 @@ void Start(){
   currentStage = 1;
 started = true;
 Serial.println("Cycle started!");
+previousMillis = millis();
 MenuMain();
 }
 
@@ -579,28 +616,11 @@ void Stop(){
 }
 
 void help() {
-	Serial.println("Thermometer 1: T1");
-	Serial.println("Thermometer 2: T2");
-	Serial.println("Thermometer 3: T3");
-	Serial.println("Stage Time: ST");
-}
-
-void SerialControl(char pin, int newVal) {
-	switch (pin) {
-	case 'A':
-		temp1[currentStage] = newVal;
-		break;
-	case 'B':
-		temp2[currentStage] = newVal;
-		break;
-	case 'C':
-		temp3[currentStage] = newVal;
-		break;
-	case 'T':
-		minutes[currentStage] = newVal;
-		break;
-	}
-	
+	Serial.println(F("Single-word keywords: start, stop, status, list, reset, save"));
+	Serial.println(F("Setpoint 1: set1, Setpoint 2: set2, Setpoint 3: set3, Stage Time: time"));
+	Serial.println(F("Enter the thing you want to change, then a space, then the stage for which you want to change it, then another space, then the value you want to set"));
+	Serial.println(F("Example: time 4 120 will set the duration of stage 4 to 120 minutes, while set3 2 245 will set the thermometer 3 setpoint to 245 degrees."));
+	Serial.println(F("If you want to save your new values so it remembers them after a power cycle, type 'save'."));
 }
 
 void ReadEEPROM() {
@@ -695,12 +715,15 @@ void ParseInput(String thing, String localstage, String localamount) {
 		Serial.println(" degrees");
 	}
 	else if (thing == "status") {
+		Serial.print("Status: ");
+		if (started) Serial.println("Started");
+		else Serial.println("Stopped");
 		Serial.print("Stage ");
 		Serial.print(currentStage);
 		Serial.print(" of ");
 		Serial.println(totalStages);
 		Serial.print("Elapsed Stage Time: ");
-		Serial.println(previousMillis / 60000);
+		Serial.println((currentMillis - previousMillis) / 60000);
 		Serial.print("Total Stage Time: ");
 		Serial.println(minutes[currentStage]);
 		Serial.print("Temp 1 ");
@@ -733,5 +756,18 @@ void ParseInput(String thing, String localstage, String localamount) {
 			Serial.println(temp3[i]);
 		}
 	}
+	else if (thing == "stages") {
+		totalStages = stage;
+		Serial.print(F("Total stages have been set to "));
+		Serial.print(totalStages);
+		Serial.println(F(". Please ensure you have set values for all the stages. Type ""list"" to see."));
+	}
+	else if (thing == "reset") {
+		resetFunc();
+	}
+	else if (thing == "save") {
+		WriteEEPROM();
+	}
 	else Serial.println("Invalid input!");
 	}
+
