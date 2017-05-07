@@ -668,9 +668,6 @@ void getInput() {
 			
 		}
 		if (newchar == '\n') {
-			//Serial.println(thingtochange);
-			//Serial.println(stage);
-			//Serial.println(numtochange);
 			ParseInput(thingtochange, stage, numtochange);
 			break;
 		}
