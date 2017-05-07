@@ -60,10 +60,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\libraries\Wire\src;$(ProjectDir)..\..\libraries\UC1701\src;$(ProjectDir)..\..\libraries\Indio\src;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\libraries\EEPROM\src;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\libraries\Wire\src\utility;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\libraries;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\libraries;$(ProjectDir)..\..\libraries;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\cores\Industruino;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\cores\Industruino\avr-libc;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\cores\Industruino\LUFA;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\Industruino\avr\variants\ind1286;$(ProjectDir)..\Industruino;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include\;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\avr\include\avr\;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.8.1\include;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.2\include;$(ProjectDir)..\..\..\..\..\..\Program Files (x86)\Arduino\hardware\tools\avr\lib\gcc\avr\4.9.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ProjectDir)__vm\.Industruino.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>__AVR_AT90usb1286__;__AVR_AT90USB1286__;F_CPU=16000000L;ARDUINO=10802;ARDUINO_usb1286;ARDUINO_ARCH_AVR;USB_VID=0x16D0;USB_PID=0x0856;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
